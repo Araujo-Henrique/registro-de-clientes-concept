@@ -7,7 +7,7 @@ Eventualmente esse sistema podera ficar mais robusto e ter visualizacao tambem p
 ## Primeira versao do projeto
 A primeira versao trara as seguintes funcionalidades:
 - Cadastro de clientes
-- COnsulta de clientes
+- Consulta de clientes
 - Atualizacao
 - Exclusao
 - Busca e filtros
@@ -20,4 +20,3 @@ Nessa primeira etapa os conceitos estudados e praticados serao:
 - SQL
 - PostgreSQL
 - Git
-0
