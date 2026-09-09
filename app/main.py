@@ -1,35 +1,95 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
+from datetime import date
+from enum import Enum
 
 app = FastAPI()
 
+class Consulado(str, Enum):
+    POA = "POA"
+    RJ = "RJ"
+    BSB = "BSB"
+    SP = "SP"
+    REC = "REC"
+
+class Rascunho(str, Enum):
+    PENDENTE = "Pendente"
+    PARCIAL = "Parcial"
+    ENVIADO = "Enviado"
+
+class StatusDS(str, Enum):
+    PENDENTE = "Pendente"
+    PARCIAL = "Parcial"
+    ABERTO = "Aberto"
+    PREENCHIDO = "Preenchido"
+    FECHADO = "Fechado"
+
+class Situacao(str, Enum):
+    PAG_PENDENTE = "Pagamento Pendente"
+    BOLETO = "Boleto"
+    CREDITO =  "Credito"
+    LIMBO = "Limbo"
+    PROCESSANDO = "Processando"
+    CADASTRO = "Cadastro"
+    ADMINISTRATIVO = "Administrativo"
+    CONCLUIDO = "Concluido"
+
+class Resultado(str, Enum):
+    PROCESSANDO = "Processando"
+    APROVADO = "Aprovado"
+    NEGADO = "Negado"
+
+
+class Orientacao(str, Enum):
+    OPTA = "Opt A"
+    FORNECIDAS = "Fornecidas"
+    AGENDADA = "Agendada"
+
 class Cliente(BaseModel):
     nome: str
-    email: str
-    telefone: str
-    n_solicitantes: int
-    data_casv: str
-    data_entrevista: str
-    consulado: str
-    status_rascunho: str
-    status_ds: str
-    orientacao: str
-    situacao: str
-    resultado: str
+    email: EmailStr
+    telefone: str = Field(pattern=r"^\d{10,11}$") # Telefone precisa ter DDD e somente os números. Sem traço ou espaço
+    n_solicitantes: int = Field(gt=0)
+
+    data_casv: date | None = None #Padrão AAAA-MM-DD
+    data_entrevista: date | None = None #Padrão AAAA-MM-DD
+
+    consulado: Consulado
+    status_rascunho: Rascunho
+    status_ds: StatusDS
+
+    orientacao: Orientacao
+    orientacao_data: date | None = None #Padrão AAAA-MM-DD
+    
+    situacao: Situacao
+    resultado: Resultado
 
 class ClienteUpdate(BaseModel):
     nome: str | None = None
-    email: str | None = None
-    telefone: str | None = None
-    n_solicitantes: int | None = None
-    data_casv: str | None = None
-    data_entrevista: str | None = None
-    consulado: str | None = None
-    status_rascunho: str | None = None
-    status_ds: str | None = None
-    orientacao: str | None = None
-    situacao: str | None = None
-    resultado: str | None = None
+    email: EmailStr | None = None
+
+    telefone: str | None = Field(
+        default=None,
+        pattern=r"^\d{10,11}$"
+    )
+
+    n_solicitantes: int | None = Field(
+        default=None,
+        gt=0
+    )
+
+    data_casv: date | None = None
+    data_entrevista: date | None = None
+
+    consulado: Consulado | None = None
+    status_rascunho: Rascunho | None = None
+    status_ds: StatusDS | None = None
+
+    orientacao: Orientacao | None = None
+    orientacao_data: date | None = None
+
+    situacao: Situacao | None = None
+    resultado: Resultado | None = None
 
 clientes = []
 cliente_id = 1
