@@ -1,9 +1,19 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 from datetime import date
 from enum import Enum
 
 app = FastAPI()
+
+def orientacao_exige_data(orientacao, orientacao_data) -> bool:
+    return orientacao == Orientacao.AGENDADA and orientacao_data is None
+
+def _validar_orientacao_data(self):
+    if orientacao_exige_data(self.orientacao, self.orientacao_data):
+        raise ValueError(
+            "Se o status da orientação está como 'agendada' é obrigatório ter uma data definida"
+        )
+    return self
 
 class Consulado(str, Enum):
     POA = "POA"
@@ -64,6 +74,8 @@ class Cliente(BaseModel):
     situacao: Situacao
     resultado: Resultado
 
+    _checar_orientacao = model_validator(mode="after")(_validar_orientacao_data)
+
 class ClienteUpdate(BaseModel):
     nome: str | None = None
     email: EmailStr | None = None
@@ -90,6 +102,8 @@ class ClienteUpdate(BaseModel):
 
     situacao: Situacao | None = None
     resultado: Resultado | None = None
+
+    _checar_orientacao = model_validator(mode="after")(_validar_orientacao_data)
 
 clientes = []
 cliente_id = 1
@@ -146,6 +160,15 @@ def atualizar_cliente(cliente_id: int, dados: ClienteUpdate):
     for cliente in clientes:
         if cliente["id"] == cliente_id:
             dados_atualizados = dados.model_dump(exclude_unset=True)
+
+            cliente_final = {**cliente, **dados_atualizados}
+            if orientacao_exige_data(cliente_final["orientacao"],
+                                     cliente_final["orientacao_data"]):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Se o status da orientação está como 'agendada' é obrigatório ter uma data definida"
+                )
+
 
             for campo, valor in dados_atualizados.items():
                 cliente[campo] = valor
