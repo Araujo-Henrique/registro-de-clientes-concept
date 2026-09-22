@@ -5,16 +5,6 @@ from enum import Enum
 
 app = FastAPI()
 
-def orientacao_exige_data(orientacao, orientacao_data) -> bool:
-    return orientacao == Orientacao.AGENDADA and orientacao_data is None
-
-def _validar_orientacao_data(self):
-    if orientacao_exige_data(self.orientacao, self.orientacao_data):
-        raise ValueError(
-            "Se o status da orientação está como 'agendada' é obrigatório ter uma data definida"
-        )
-    return self
-
 class Consulado(str, Enum):
     POA = "POA"
     RJ = "RJ"
@@ -54,6 +44,18 @@ class Orientacao(str, Enum):
     OPTA = "Opt A"
     FORNECIDAS = "Fornecidas"
     AGENDADA = "Agendada"
+
+
+def orientacao_exige_data(orientacao, orientacao_data) -> bool:
+    return orientacao == Orientacao.AGENDADA and orientacao_data is None
+
+def _validar_orientacao_data(self):
+    if orientacao_exige_data(self.orientacao, self.orientacao_data):
+        raise ValueError(
+            "Se o status da orientação está como 'agendada' é obrigatório ter uma data definida"
+        )
+    return self
+
 
 class Cliente(BaseModel):
     nome: str
