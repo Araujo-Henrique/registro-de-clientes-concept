@@ -103,8 +103,6 @@ class ClienteUpdate(BaseModel):
     situacao: Situacao | None = None
     resultado: Resultado | None = None
 
-    _checar_orientacao = model_validator(mode="after")(_validar_orientacao_data)
-
 clientes = []
 cliente_id = 1
 
