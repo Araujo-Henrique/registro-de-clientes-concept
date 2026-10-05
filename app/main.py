@@ -159,7 +159,10 @@ def atualizar_cliente(cliente_id: int, dados: ClienteUpdate):
 
     for cliente in clientes:
         if cliente["id"] == cliente_id:
-            dados_atualizados = dados.model_dump(exclude_unset=True)
+            dados_atualizados = dados.model_dump(
+                exclude_unset=True,
+                exclude_none=True
+                )
 
             cliente_final = {**cliente, **dados_atualizados}
             if orientacao_exige_data(cliente_final["orientacao"],
