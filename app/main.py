@@ -1,13 +1,14 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr, Field, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from datetime import date
 from enum import Enum
+import re
 
 app = FastAPI()
 
 class Consulado(str, Enum):
     POA = "POA"
-    RJ = "RJ"
+    RIO = "RIO"
     BSB = "BSB"
     SP = "SP"
     REC = "REC"
@@ -22,6 +23,7 @@ class StatusDS(str, Enum):
     PARCIAL = "Parcial"
     ABERTO = "Aberto"
     PREENCHIDO = "Preenchido"
+    REVISADO = "Revisado"
     FECHADO = "Fechado"
 
 class Situacao(str, Enum):
@@ -46,6 +48,22 @@ class Orientacao(str, Enum):
     AGENDADA = "Agendada"
 
 
+class Monitoramento(str, Enum):
+    ATIVO = "Ativo"
+    CONCLUIDO = "Concluido"
+
+
+def normaliza_telefone(valor):
+    # Guarda só dígitos. Remove o 55 do Brasil apenas quando o tamanho confirma
+    # que é código de país (12-13 dígitos), pois 55 também é um DDD (Santa Maria/RS).
+    if valor is None:
+        return valor
+    digitos = re.sub(r"\D", "", str(valor))
+    if digitos.startswith("55") and len(digitos) in (12, 13):
+        digitos = digitos[2:]
+    return digitos
+
+
 def orientacao_exige_data(orientacao, orientacao_data) -> bool:
     return orientacao == Orientacao.AGENDADA and orientacao_data is None
 
@@ -60,11 +78,15 @@ def _validar_orientacao_data(self):
 class Cliente(BaseModel):
     nome: str
     email: EmailStr
-    telefone: str = Field(pattern=r"^\d{10,11}$") # Telefone precisa ter DDD e somente os números. Sem traço ou espaço
+    telefone: str = Field(pattern=r"^\d{10,15}$") # Só dígitos (10-11 nacional, até 15 internacional). Normalizado pelo validator abaixo
+    grupo: str | None = None # Nome do grupo de WhatsApp quando o mesmo número atende vários clientes (agências, famílias)
     n_solicitantes: int = Field(gt=0)
+
+    monitoramento: Monitoramento = Monitoramento.ATIVO
 
     data_casv: date | None = None #Padrão AAAA-MM-DD
     data_entrevista: date | None = None #Padrão AAAA-MM-DD
+    data_vencimento_taxa: date | None = None #Padrão AAAA-MM-DD
 
     consulado: Consulado
     status_rascunho: Rascunho
@@ -72,10 +94,12 @@ class Cliente(BaseModel):
 
     orientacao: Orientacao
     orientacao_data: date | None = None #Padrão AAAA-MM-DD
-    
+    orientacao_por: str | None = Field(default=None, min_length=1, max_length=50) # Nome (e sobrenome, se preciso) de quem forneceu
+
     situacao: Situacao
     resultado: Resultado
 
+    _normalizar_telefone = field_validator("telefone", mode="before")(normaliza_telefone)
     _checar_orientacao = model_validator(mode="after")(_validar_orientacao_data)
 
 class ClienteUpdate(BaseModel):
@@ -84,16 +108,20 @@ class ClienteUpdate(BaseModel):
 
     telefone: str | None = Field(
         default=None,
-        pattern=r"^\d{10,11}$"
+        pattern=r"^\d{10,15}$"
     )
+    grupo: str | None = None
 
     n_solicitantes: int | None = Field(
         default=None,
         gt=0
     )
 
+    monitoramento: Monitoramento | None = None
+
     data_casv: date | None = None
     data_entrevista: date | None = None
+    data_vencimento_taxa: date | None = None
 
     consulado: Consulado | None = None
     status_rascunho: Rascunho | None = None
@@ -101,9 +129,12 @@ class ClienteUpdate(BaseModel):
 
     orientacao: Orientacao | None = None
     orientacao_data: date | None = None
+    orientacao_por: str | None = Field(default=None, min_length=1, max_length=50)
 
     situacao: Situacao | None = None
     resultado: Resultado | None = None
+
+    _normalizar_telefone = field_validator("telefone", mode="before")(normaliza_telefone)
 
 clientes = []
 cliente_id = 1
