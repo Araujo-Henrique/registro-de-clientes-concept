@@ -11,6 +11,9 @@
 --   Cópia de 2021-2023 - OBT.csv (historico)     -> stg_obt_hist
 --   Cópia de 2021-2023 - REN.csv (historico)     -> stg_ren_hist
 --
+-- Cada planilha ganha, na ULTIMA coluna, 'notas_ds160' (gerada pelo Apps Script em db/apps_script_notas_ds160.gs;
+-- as notas das celulas nao vao no CSV). stg_pass nao tem a coluna.
+--
 -- Conferir as contagens ANTES de seguir (devem bater com o numero de registros de cada CSV):
 --   SELECT COUNT(*) FROM stg_ren;  -- etc.
 -- Depois rode 04_staging_ajustar.sql.
@@ -29,7 +32,8 @@ CREATE TABLE stg_ren (
     ds160                 TEXT,
     despacho              TEXT,
     situacao              TEXT,
-    rastreio              TEXT
+    rastreio              TEXT,
+    notas_ds160           TEXT
 );
 
 -- OBT (16 colunas). 1a coluna oculta; marcador_1 e marcador_2 sao as colunas '-' (nao usadas).
@@ -49,7 +53,8 @@ CREATE TABLE stg_obt (
     marcador_1            TEXT,
     situacao              TEXT,
     resultado_rastreio    TEXT,
-    marcador_2            TEXT
+    marcador_2            TEXT,
+    notas_ds160           TEXT
 );
 
 -- PASS (6 colunas)
@@ -78,7 +83,8 @@ CREATE TABLE stg_obt_hist (
     marcador_1            TEXT,
     situacao              TEXT,
     resultado             TEXT,
-    eta                   TEXT
+    eta                   TEXT,
+    notas_ds160           TEXT
 );
 
 -- REN historico 2021-2023 (12 colunas): sem WhatsApp, com ETA no final.
@@ -94,5 +100,6 @@ CREATE TABLE stg_ren_hist (
     ds160                 TEXT,
     despacho              TEXT,
     situacao              TEXT,
-    eta                   TEXT
+    eta                   TEXT,
+    notas_ds160           TEXT
 );

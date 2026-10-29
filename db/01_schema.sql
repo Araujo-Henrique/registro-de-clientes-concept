@@ -24,8 +24,8 @@ INSERT INTO funcionarios (nome) VALUES
 -- Ex-funcionarios (historico de orientacoes): inativos
 INSERT INTO funcionarios (nome, ativo) VALUES
     ('Roger Cardoso', FALSE),
-    ('Thiago Matos',  FALSE),
-    ('Esther Matos',  FALSE),
+    ('Thiago HP',  FALSE),
+    ('Esther HP',  FALSE),
     ('Joao Banks',    FALSE);
 
 
@@ -81,6 +81,14 @@ CREATE TABLE processos_obt (
     situacao             TEXT NOT NULL
                          CHECK (situacao IN ('Pagamento Pendente', 'Boleto', 'Credito', 'Limbo',
                                              'Processando', 'Cadastro', 'Administrativo', 'Pago', 'Concluido')),
+    -- linhas 'AA00XXXXXX - Solicitante' (uma por formulario); montadas e validadas pelo back-end
+    codigo_ds160         TEXT
+                         CHECK (codigo_ds160 IS NULL
+                                OR (codigo_ds160 = btrim(codigo_ds160) AND codigo_ds160 <> '')),
+    -- o resto da nota da celula do DS160 (pedidos de alteracao), sem as linhas de codigo
+    notas_ds160          TEXT
+                         CHECK (notas_ds160 IS NULL
+                                OR (notas_ds160 = btrim(notas_ds160) AND notas_ds160 <> '')),
     codigo_rastreio      TEXT
                          CHECK (codigo_rastreio IS NULL
                                 OR (codigo_rastreio = btrim(codigo_rastreio) AND codigo_rastreio <> '')),

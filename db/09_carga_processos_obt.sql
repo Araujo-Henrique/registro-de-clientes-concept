@@ -14,12 +14,13 @@
 --   * data_vencimento_taxa: data com ano achada em resultado
 --   * casv = 'PAGO' -> data_casv NULL e situacao 'Pago'
 --   * codigo de rastreio dentro de situacao (/XX123BR) -> codigo_rastreio, situacao Concluido
+--   * nota do DS160: linhas AA00... -> codigo_ds160; o resto -> notas_ds160 (funcoes em 05)
 --   * as duas colunas '-' da planilha nao sao carregadas
 
 INSERT INTO processos_obt
     (cliente_id, consulado, n_solicitantes, monitoramento,
      data_casv, data_entrevista, data_vencimento_taxa,
-     status_rascunho, status_ds,
+     status_rascunho, status_ds, codigo_ds160, notas_ds160,
      orientacao, orientacao_data, orientacao_por_id,
      situacao, codigo_rastreio, resultado)
 WITH limpo AS (
@@ -32,6 +33,8 @@ WITH limpo AS (
            lower(btrim(casv)) = 'pago'      AS casv_pago,
            COALESCE(initcap(lower(NULLIF(NULLIF(btrim(rascunho), ''), '#REF!'))), 'Pendente') AS rascunho,
            COALESCE(initcap(lower(NULLIF(NULLIF(btrim(ds160), ''), '#REF!'))),    'Pendente') AS ds160,
+           linhas_codigo_ds160(notas_ds160)     AS codigo_ds160,
+           linhas_nao_codigo_ds160(notas_ds160) AS notas_ds160,
            btrim(orientacoes)               AS orientacao_bruta,
            btrim(situacao)                  AS situacao_bruta,
            btrim(resultado_rastreio)        AS resultado_bruto
@@ -52,7 +55,7 @@ SELECT c.id, l.consulado, l.n_solicitantes, l.monitoramento,
        l.data_casv, l.data_entrevista,
        -- primeira data com ano em resultado (ex.: 'taxa vence 11/02/26'); sem ano -> NULL
        parse_data(substring(l.resultado_bruto from '(\d{1,2}/\d{1,2}/(?:\d{4}|\d{2}))')),
-       l.rascunho, l.ds160,
+       l.rascunho, l.ds160, l.codigo_ds160, l.notas_ds160,
        CASE WHEN l.orientacao_bruta ~* '^fornecidas' THEN 'Fornecidas'
             WHEN parse_data(substring(l.orientacao_bruta from '^\d{1,2}/\d{1,2}/\d{2,4}')) IS NOT NULL THEN 'Agendada'
             WHEN l.orientacao_bruta ~ '^\d{1,2}/[a-z]{3}\.' THEN 'Agendada'

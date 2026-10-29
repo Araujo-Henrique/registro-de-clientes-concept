@@ -19,3 +19,22 @@ CREATE OR REPLACE FUNCTION parse_data(t TEXT) RETURNS DATE AS $$
         WHEN btrim(t) ~ '^\d{1,2}/\d{1,2}/\d{2}$'  THEN to_date(btrim(t), 'DD/MM/YY')
     END
 $$ LANGUAGE sql STABLE;
+
+
+-- Nota da celula do DS160 -> duas partes (as notas das planilhas misturam codigos e pedidos de alteracao).
+-- linhas_codigo_ds160: so as linhas que comecam com AA00 (ex.: 'AA00000001 - Maria'), na ordem original.
+-- linhas_nao_codigo_ds160: o resto (pedidos de alteracao), sem linhas em branco.
+-- Vazio ou sem linhas do tipo -> NULL.
+CREATE FUNCTION linhas_codigo_ds160(nota TEXT) RETURNS TEXT
+LANGUAGE sql IMMUTABLE AS $$
+    SELECT NULLIF(string_agg(btrim(l.linha), chr(10) ORDER BY l.n), '')
+    FROM regexp_split_to_table(replace(nota, chr(13), ''), chr(10)) WITH ORDINALITY AS l(linha, n)
+    WHERE btrim(l.linha) ~* '^AA00'
+$$;
+
+CREATE FUNCTION linhas_nao_codigo_ds160(nota TEXT) RETURNS TEXT
+LANGUAGE sql IMMUTABLE AS $$
+    SELECT NULLIF(string_agg(btrim(l.linha), chr(10) ORDER BY l.n), '')
+    FROM regexp_split_to_table(replace(nota, chr(13), ''), chr(10)) WITH ORDINALITY AS l(linha, n)
+    WHERE btrim(l.linha) <> '' AND btrim(l.linha) !~* '^AA00'
+$$;

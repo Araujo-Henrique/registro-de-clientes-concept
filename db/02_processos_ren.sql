@@ -26,6 +26,12 @@ CREATE TABLE processos_ren (
                                         'Processando', 'Cadastro', 'Administrativo',
                                         'Entrevista', 'Concluido')),
 
+    -- linhas 'AA00XXXXXX - Solicitante' (uma por formulario); montadas e validadas pelo back-end
+    codigo_ds160    TEXT CHECK (codigo_ds160 IS NULL
+                                OR (codigo_ds160 = btrim(codigo_ds160) AND codigo_ds160 <> '')),
+    -- o resto da nota da celula do DS160 (pedidos de alteracao), sem as linhas de codigo
+    notas_ds160     TEXT CHECK (notas_ds160 IS NULL
+                                OR (notas_ds160 = btrim(notas_ds160) AND notas_ds160 <> '')),
     codigo_rastreio TEXT CHECK (codigo_rastreio IS NULL
                                 OR (codigo_rastreio = btrim(codigo_rastreio) AND codigo_rastreio <> '')),
     endereco        TEXT CHECK (endereco IS NULL

@@ -15,7 +15,7 @@
 INSERT INTO processos_obt
     (cliente_id, consulado, n_solicitantes, monitoramento,
      data_casv, data_entrevista,
-     status_rascunho, status_ds,
+     status_rascunho, status_ds, codigo_ds160, notas_ds160,
      orientacao, orientacao_por_id,
      situacao, resultado)
 WITH limpo AS (
@@ -27,6 +27,8 @@ WITH limpo AS (
            parse_data(entrevista)            AS data_entrevista,
            COALESCE(initcap(lower(NULLIF(NULLIF(btrim(rascunho), ''), '#REF!'))), 'Pendente') AS rascunho,
            COALESCE(initcap(lower(NULLIF(NULLIF(btrim(ds160), ''), '#REF!'))),    'Pendente') AS ds160,
+           linhas_codigo_ds160(notas_ds160)     AS codigo_ds160,
+           linhas_nao_codigo_ds160(notas_ds160) AS notas_ds160,
            btrim(orientacoes)                        AS orientacao_bruta,
            btrim(situacao)                           AS situacao_bruta,
            btrim(resultado)                          AS resultado_bruto
@@ -36,7 +38,7 @@ WITH limpo AS (
 )
 SELECT c.id, l.consulado, l.n_solicitantes, l.monitoramento,
        l.data_casv, l.data_entrevista,
-       l.rascunho, l.ds160,
+       l.rascunho, l.ds160, l.codigo_ds160, l.notas_ds160,
        CASE WHEN l.orientacao_bruta ~* '^fornecidas' THEN 'Fornecidas' ELSE 'Pendente' END,
        (SELECT f.id FROM funcionarios f
          WHERE upper(left(f.nome, 1)) = upper(substring(l.orientacao_bruta from '\(([A-Za-z])\)'))),
@@ -57,7 +59,7 @@ JOIN clientes c ON lower(c.nome) = lower(l.nome);
 -- ---------------------------------------------------------
 INSERT INTO processos_ren
     (cliente_id, consulado, n_solicitantes, data_casv,
-     docs, status_rascunho, status_ds, situacao)
+     docs, status_rascunho, status_ds, codigo_ds160, notas_ds160, situacao)
 WITH limpo AS (
     SELECT nome_limpo(solicitante_principal) AS nome,
            btrim(con)                        AS consulado,
@@ -68,6 +70,8 @@ WITH limpo AS (
                 ELSE 'Pendente' END          AS docs,
            COALESCE(initcap(lower(NULLIF(NULLIF(btrim(rascunho), ''), '#REF!'))), 'Pendente') AS rascunho,
            COALESCE(initcap(lower(NULLIF(NULLIF(btrim(ds160), ''), '#REF!'))),    'Pendente') AS ds160,
+           linhas_codigo_ds160(notas_ds160)     AS codigo_ds160,
+           linhas_nao_codigo_ds160(notas_ds160) AS notas_ds160,
            CASE btrim(situacao)
                 WHEN 'Concluído' THEN 'Concluido'
                 WHEN ''          THEN 'Processando'
@@ -78,7 +82,7 @@ WITH limpo AS (
       AND NULLIF(btrim(numero_solicitantes), '') IS NOT NULL
 )
 SELECT c.id, l.consulado, l.n_solicitantes, l.data_casv,
-       l.docs, l.rascunho, l.ds160, l.situacao
+       l.docs, l.rascunho, l.ds160, l.codigo_ds160, l.notas_ds160, l.situacao
 FROM limpo l
 JOIN clientes c ON lower(c.nome) = lower(l.nome);
 

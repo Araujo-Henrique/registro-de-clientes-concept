@@ -11,7 +11,7 @@
 
 INSERT INTO processos_ren
     (cliente_id, consulado, n_solicitantes, data_casv,
-     docs, status_rascunho, status_ds, situacao, codigo_rastreio, endereco)
+     docs, status_rascunho, status_ds, codigo_ds160, notas_ds160, situacao, codigo_rastreio, endereco)
 WITH limpo AS (
     SELECT nome_limpo(solicitante_principal) AS nome,
            con,
@@ -21,6 +21,8 @@ WITH limpo AS (
            initcap(lower(NULLIF(btrim(docs), '#REF!')))     AS docs,
            initcap(lower(NULLIF(btrim(rascunho), '#REF!'))) AS rascunho,
            initcap(lower(NULLIF(btrim(ds160), '#REF!')))    AS ds160,
+           linhas_codigo_ds160(notas_ds160)     AS codigo_ds160,
+           linhas_nao_codigo_ds160(notas_ds160) AS notas_ds160,
            CASE btrim(situacao)
                 WHEN 'Concluído' THEN 'Concluido'
                 WHEN '.Cadastro' THEN 'Cadastro'
@@ -33,6 +35,7 @@ SELECT c.id, l.con, l.n_solicitantes, l.data_casv,
        COALESCE(l.docs,     'Pendente'),
        COALESCE(l.rascunho, 'Pendente'),
        COALESCE(l.ds160,    'Pendente'),
+       l.codigo_ds160, l.notas_ds160,
        l.situacao,
        CASE WHEN l.rastreio ~ '^/' THEN l.rastreio END,
        CASE WHEN l.rastreio !~ '^/' AND l.rastreio ~ '[\s,]' THEN l.rastreio END
