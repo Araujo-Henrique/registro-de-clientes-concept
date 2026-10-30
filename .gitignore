@@ -4,3 +4,6 @@ venv/
 #Arquivos temporários
 __pycache__/
 *.pyc
+
+# Segredos (senha do banco)
+.env
