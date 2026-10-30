@@ -18,7 +18,6 @@ CREATE UNIQUE INDEX funcionarios_nome_unico ON funcionarios (LOWER(nome));
 
 INSERT INTO funcionarios (nome) VALUES
     ('Gabriel Vieira'),
-    ('Marcio Conde'),
     ('Henrique Araujo');
 
 -- Ex-funcionarios (historico de orientacoes): inativos
@@ -26,7 +25,8 @@ INSERT INTO funcionarios (nome, ativo) VALUES
     ('Roger Cardoso', FALSE),
     ('Thiago HP',  FALSE),
     ('Esther HP',  FALSE),
-    ('Joao Banks',    FALSE);
+    ('Joao Banks',    FALSE),
+    ('Marcio Conde',    FALSE);
 
 
 -- =========================================================
