@@ -10,3 +10,8 @@ ALTER TABLE stg_ren_hist DROP COLUMN solicitante_oculta;
 -- ETA: o prazo do DS160 e calculado no back-end, nao fica no banco
 ALTER TABLE stg_obt_hist DROP COLUMN eta;
 ALTER TABLE stg_ren_hist DROP COLUMN eta;
+
+-- colunas '-' (marcadores) da planilha: nao usadas por nenhuma carga
+ALTER TABLE stg_obt      DROP COLUMN IF EXISTS marcador_1;
+ALTER TABLE stg_obt      DROP COLUMN IF EXISTS marcador_2;
+ALTER TABLE stg_obt_hist DROP COLUMN IF EXISTS marcador_1;
