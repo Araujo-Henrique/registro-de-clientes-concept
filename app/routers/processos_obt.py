@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app import store
 from app.enums import ConsuladoOBT, Monitoramento, SituacaoOBT
-from app.routers.comum import Paginacao, contem, igual, mesclar_e_validar, obter_ou_404
+from app.routers.comum import Paginacao, mesclar_e_validar, obter_ou_404
 from app.schemas.processo_obt import (ProcessoOBTBase, ProcessoOBTCreate, ProcessoOBTOut,
                                       ProcessoOBTUpdate)
 
@@ -26,10 +26,10 @@ def busca_processos_obt(cliente_id: int | None = None, consulado: ConsuladoOBT |
                         situacao: SituacaoOBT | None = None,
                         monitoramento: Monitoramento | None = None, codigo_ds160: str | None = None,
                         pagina: Paginacao = Depends()):
-    predicado = igual(cliente_id=cliente_id, consulado=consulado, situacao=situacao,
-                      monitoramento=monitoramento)
-    por_codigo = contem("codigo_ds160", codigo_ds160)
-    return store.processos_obt.listar(lambda linha: predicado(linha) and por_codigo(linha), pagina.limit, pagina.offset)
+    return store.processos_obt.listar(
+        igual={"cliente_id": cliente_id, "consulado": consulado, "situacao": situacao,
+               "monitoramento": monitoramento},
+        contem={"codigo_ds160": codigo_ds160}, limit=pagina.limit, offset=pagina.offset)
 
 
 @router.get("/{processo_id}", response_model=ProcessoOBTOut)

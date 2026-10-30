@@ -50,6 +50,9 @@ class ProcessoRENUpdate(BaseModel):
 
 
 class ProcessoRENOut(ProcessoRENBase, DS160Saida):
+    # a coluna gerada data_despacho vem do banco junto com a linha; a API devolve o campo calculado abaixo
+    model_config = ConfigDict(extra="ignore")
+
     id: int
 
     @computed_field

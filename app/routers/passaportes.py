@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app import store
 from app.enums import SituacaoPassaporte
-from app.routers.comum import Paginacao, igual, mesclar_e_validar, obter_ou_404
+from app.routers.comum import Paginacao, mesclar_e_validar, obter_ou_404
 from app.schemas.passaporte import (PassaporteBase, PassaporteCreate, PassaporteOut,
                                     PassaporteUpdate)
 
@@ -18,8 +18,8 @@ def cria_passaporte(passaporte: PassaporteCreate):
 @router.get("", response_model=list[PassaporteOut])
 def busca_passaportes(cliente_id: int | None = None, situacao: SituacaoPassaporte | None = None,
                       pagina: Paginacao = Depends()):
-    predicado = igual(cliente_id=cliente_id, situacao=situacao)
-    return store.passaportes.listar(predicado, pagina.limit, pagina.offset)
+    return store.passaportes.listar(igual={"cliente_id": cliente_id, "situacao": situacao},
+                                    limit=pagina.limit, offset=pagina.offset)
 
 
 @router.get("/{passaporte_id}", response_model=PassaporteOut)

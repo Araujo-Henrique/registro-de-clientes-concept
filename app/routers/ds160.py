@@ -33,33 +33,45 @@ def rotas_ds160(prefixo: str, tabela: Tabela, modelo_out: type[BaseModel], rotul
     def processo_ou_404(processo_id: int) -> dict:
         return obter_ou_404(tabela, processo_id, rotulo)
 
+    def grava(processo_id: int, campo: str, lido, novo) -> dict:
+        """Lê-modifica-grava sem sobrescrever o trabalho de outra pessoa: só grava se o campo ainda
+        for o que lemos; senão o processo mudou no meio do caminho e a operação deve ser repetida."""
+        gravado = tabela.atualizar(processo_id, {campo: novo}, se={campo: lido})
+        if gravado is None:
+            raise HTTPException(
+                status_code=409, detail="O processo foi alterado por outra pessoa; tente novamente")
+        return gravado
+
     # ---------- códigos: um por formulário, identificado pelo código ----------
 
     @router.post("/{processo_id}/codigos-ds160", response_model=modelo_out, status_code=201)
     def adiciona_codigo(processo_id: int, dados: CodigoDS160):
-        entradas = le_linhas(processo_ou_404(processo_id).get("codigo_ds160"))
+        lido = processo_ou_404(processo_id).get("codigo_ds160")
+        entradas = le_linhas(lido)
         if _acha(entradas, dados.codigo) is not None:
             raise HTTPException(status_code=409, detail="Esse código já está registrado neste processo")
         entradas.append(CodigoDS160Out(codigo=dados.codigo, solicitante=dados.solicitante))
-        return tabela.atualizar(processo_id, {"codigo_ds160": monta_linhas(entradas)})
+        return grava(processo_id, "codigo_ds160", lido, monta_linhas(entradas))
 
     @router.patch("/{processo_id}/codigos-ds160/{codigo}", response_model=modelo_out)
     def edita_codigo(processo_id: int, codigo: str, dados: SolicitanteUpdate):
-        entradas = le_linhas(processo_ou_404(processo_id).get("codigo_ds160"))
+        lido = processo_ou_404(processo_id).get("codigo_ds160")
+        entradas = le_linhas(lido)
         posicao = _acha(entradas, codigo)
         if posicao is None:
             raise HTTPException(status_code=404, detail="Código não encontrado neste processo")
         entradas[posicao].solicitante = dados.solicitante
-        return tabela.atualizar(processo_id, {"codigo_ds160": monta_linhas(entradas)})
+        return grava(processo_id, "codigo_ds160", lido, monta_linhas(entradas))
 
     @router.delete("/{processo_id}/codigos-ds160/{codigo}", response_model=modelo_out)
     def remove_codigo(processo_id: int, codigo: str):
-        entradas = le_linhas(processo_ou_404(processo_id).get("codigo_ds160"))
+        lido = processo_ou_404(processo_id).get("codigo_ds160")
+        entradas = le_linhas(lido)
         posicao = _acha(entradas, codigo)
         if posicao is None:
             raise HTTPException(status_code=404, detail="Código não encontrado neste processo")
         del entradas[posicao]
-        return tabela.atualizar(processo_id, {"codigo_ds160": monta_linhas(entradas)})
+        return grava(processo_id, "codigo_ds160", lido, monta_linhas(entradas))
 
     # ---------- notas: pedidos de alteração, texto livre ----------
 
@@ -68,12 +80,13 @@ def rotas_ds160(prefixo: str, tabela: Tabela, modelo_out: type[BaseModel], rotul
         _recusa_linha_de_codigo(dados.texto)
         atual = processo_ou_404(processo_id).get("notas_ds160")
         nova = dados.texto if atual is None else f"{atual}\n{dados.texto}"
-        return tabela.atualizar(processo_id, {"notas_ds160": nova})
+        return grava(processo_id, "notas_ds160", atual, nova)
 
     @router.patch("/{processo_id}/notas-ds160", response_model=modelo_out)
     def edita_nota(processo_id: int, dados: NotaEditar):
         _recusa_linha_de_codigo(dados.novo)
-        atual = processo_ou_404(processo_id).get("notas_ds160") or ""
+        lido = processo_ou_404(processo_id).get("notas_ds160")
+        atual = lido or ""
         ocorrencias = atual.count(dados.trecho)
         if ocorrencias == 0:
             raise HTTPException(status_code=404, detail="Trecho não encontrado na nota")
@@ -83,11 +96,11 @@ def rotas_ds160(prefixo: str, tabela: Tabela, modelo_out: type[BaseModel], rotul
                 detail=f"O trecho aparece {ocorrencias} vezes na nota; informe um trecho mais específico",
             )
         nova = atual.replace(dados.trecho, dados.novo).strip()
-        return tabela.atualizar(processo_id, {"notas_ds160": nova or None})
+        return grava(processo_id, "notas_ds160", lido, nova or None)
 
     @router.delete("/{processo_id}/notas-ds160", response_model=modelo_out)
     def limpa_nota(processo_id: int):
         processo_ou_404(processo_id)
-        return tabela.atualizar(processo_id, {"notas_ds160": None})
+        return tabela.atualizar(processo_id, {"notas_ds160": None})  # limpar não depende do que havia antes
 
     return router

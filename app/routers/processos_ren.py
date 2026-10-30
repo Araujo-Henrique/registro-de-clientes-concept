@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app import store
 from app.enums import Consulado, SituacaoREN
-from app.routers.comum import Paginacao, contem, igual, mesclar_e_validar, obter_ou_404
+from app.routers.comum import Paginacao, mesclar_e_validar, obter_ou_404
 from app.schemas.processo_ren import (ProcessoRENBase, ProcessoRENCreate, ProcessoRENOut,
                                       ProcessoRENUpdate)
 
@@ -19,9 +19,9 @@ def cria_processo_ren(processo: ProcessoRENCreate):
 def busca_processos_ren(cliente_id: int | None = None, consulado: Consulado | None = None,
                         situacao: SituacaoREN | None = None, codigo_ds160: str | None = None,
                         pagina: Paginacao = Depends()):
-    predicado = igual(cliente_id=cliente_id, consulado=consulado, situacao=situacao)
-    por_codigo = contem("codigo_ds160", codigo_ds160)
-    return store.processos_ren.listar(lambda linha: predicado(linha) and por_codigo(linha), pagina.limit, pagina.offset)
+    return store.processos_ren.listar(
+        igual={"cliente_id": cliente_id, "consulado": consulado, "situacao": situacao},
+        contem={"codigo_ds160": codigo_ds160}, limit=pagina.limit, offset=pagina.offset)
 
 
 @router.get("/{processo_id}", response_model=ProcessoRENOut)

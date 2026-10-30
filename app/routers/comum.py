@@ -10,20 +10,6 @@ class Paginacao:
         self.offset = offset
 
 
-def igual(**filtros):
-    """Predicado: a linha precisa ter exatamente esses valores (filtros None são ignorados)."""
-    ativos = {campo: valor for campo, valor in filtros.items() if valor is not None}
-    return lambda linha: all(linha.get(campo) == valor for campo, valor in ativos.items())
-
-
-def contem(campo: str, trecho: str | None):
-    """Predicado: o texto do campo contém o trecho, sem diferenciar maiúsculas (None ignora o filtro)."""
-    if trecho is None:
-        return lambda linha: True
-    trecho = trecho.lower()
-    return lambda linha: linha.get(campo) is not None and trecho in linha[campo].lower()
-
-
 def obter_ou_404(tabela: Tabela, id: int, rotulo: str) -> dict:
     linha = tabela.obter(id)
     if linha is None:
